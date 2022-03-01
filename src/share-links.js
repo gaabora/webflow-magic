@@ -67,19 +67,18 @@ class ShareLinks {
   fallbackCopyTextToClipboard(text) {
     var textArea = document.createElement("textarea");
     textArea.value = text;
-    
     textArea.style.top = "0";
     textArea.style.left = "0";
     textArea.style.position = "fixed";
-  
+
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
   
     try {
       document.execCommand('copy');
-    } catch (err) {
-      console.error('Fallback: Oops, unable to copy', err);
+    } catch (ex) {
+      console.error('Fallback: Oops, unable to copy', ex);
     }
     document.body.removeChild(textArea);
   }
