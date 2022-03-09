@@ -6,13 +6,15 @@ class ShareLinks {
     LINK_CLASS_FACEBOOK: 'facebook',
     LINK_CLASS_LINKEDIN: 'linkedin',
     LINK_CLASS_TWITTER: 'twitter',
+    ADD_UTM: false,
+    SET_TARGET_BLANK: true,
     SET_UTM_SOURCE: true,
     UTM_STATIC_DATA: {
-      // uncomment/comment lines below to add/replace utm static values for the page to share
       utm_medium: 'share-link',
     },
   }
-  
+
+
   constructor(options) {
     this.localOptions = options;
     if (options && isObject(options)) {
@@ -22,41 +24,45 @@ class ShareLinks {
     } else {
       this.localOptions = { ...this.defaultOptions };
     }
+
     const utmStaticEntries = Object.entries(this.localOptions.UTM_STATIC_DATA);
     const searchParams = new URLSearchParams(location.search);
     
-    utmStaticEntries.forEach(([param, value]) => {
-      searchParams.set(param, value);
-    });
+    if (this.localOptions.ADD_UTM) {
+      utmStaticEntries.forEach(([param, value]) => {
+        searchParams.set(param, value);
+      });
+    }
 
     const url = new URL(`${location.origin}${location.pathname}`);
     document.querySelectorAll(`.${this.localOptions.LINK_CLASS}`).forEach(linkEl => {
-      const targetType = this.getTargetType(linkEl);
+      const destinationType = this.getDestinationType(linkEl);
       
-      if (this.localOptions.SET_UTM_SOURCE) searchParams.set('utm_source', targetType);
+      if (this.localOptions.ADD_UTM && this.localOptions.SET_UTM_SOURCE) searchParams.set('utm_source', destinationType);
       
       url.search = searchParams.toString();
 
-      if (targetType === 'clipboard') linkEl.addEventListener('click', (e) => {
+      if (destinationType === 'clipboard') linkEl.addEventListener('click', (e) => {
         e.preventDefault();
         this.copyTextToClipboard(url);
       });
       
-      this.setlinkUrl(linkEl, this.getShareLink(targetType, url.toString()));  
+      this.setlinkUrl(linkEl, this.getShareLink(destinationType, url.toString()));
+      if (this.localOptions.SET_TARGET_BLANK) linkEl.target = '_blank';
     });
   }
   setlinkUrl(linkEl, url) {
     linkEl.href = url;
   }
-  getTargetType(linkEl) {
+  getDestinationType(linkEl) {
     const classList = linkEl.classList;
     if (classList.contains(this.localOptions.LINK_CLASS_CLIPBOARD)) return 'clipboard';
     if (classList.contains(this.localOptions.LINK_CLASS_FACEBOOK)) return 'facebook';
     if (classList.contains(this.localOptions.LINK_CLASS_LINKEDIN)) return 'linkedin';
     if (classList.contains(this.localOptions.LINK_CLASS_TWITTER)) return 'twitter';
   }
-  getShareLink(targetType, url, text='') {
-    switch (targetType) {
+  getShareLink(destinationType, url, text='') {
+    switch (destinationType) {
       case 'clipboard': return 'javascript:;';
       case 'facebook': return `https://www.facebook.com/sharer/sharer.php?u=${url}`;
       case 'linkedin': return `https://www.linkedin.com/shareArticle?mini=true&url=${url}`;
